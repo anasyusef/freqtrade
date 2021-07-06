@@ -1,0 +1,15 @@
+---
+version: "3"
+services:
+  freqtrade:
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+    # Please read the https://www.freqtrade.io/en/latest/rest-api/ documentation
+    ports:
+      - "8080:8080"
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqtrade.log
+      --config /freqtrade/user_data/base-config.json
+      --config /freqtrade/user_data/config-dev.json
+      --strategy ProtectedZeus
