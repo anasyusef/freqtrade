@@ -1,0 +1,22 @@
+---
+    version: "3"
+    services:
+      freqtrade:
+        image: 302142484185.dkr.ecr.eu-west-2.amazonaws.com/freqtrade-bot:latest
+        restart: unless-stopped
+        container_name: freqtrade
+        ports:
+            - target: 8080
+              x-aws-protocol: http
+        command: >
+          trade
+          --logfile /freqtrade/user_data/logs/freqtrade.log
+          --config /freqtrade/user_data/base-config.json 
+          --config /freqtrade/user_data/config-prod.json
+          --strategy ProtectedZeus
+        deploy:
+          resources:
+            limits:
+              cpus: '2'
+              memory: 4096M
+    
