@@ -73,6 +73,12 @@ instance/
 # Scrapy stuff:
 .scrapy
 
+#Terraform stuff
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+
 # Sphinx documentation
 docs/_build/
 
@@ -95,3 +101,4 @@ target/
 
 #exceptions
 !*.gitkeep
+
