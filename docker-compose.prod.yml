@@ -2,7 +2,7 @@
     version: "3"
     services:
       freqtrade:
-        image: 302142484185.dkr.ecr.eu-west-2.amazonaws.com/freqtrade-bot:latest
+        image: 302142484185.dkr.ecr.ap-northeast-1.amazonaws.com/freqtrade_bot:latest
         restart: unless-stopped
         container_name: freqtrade
         ports:
@@ -17,6 +17,6 @@
         deploy:
           resources:
             limits:
-              cpus: '2'
-              memory: 4096M
+              cpus: '0.5'
+              memory: 512M
     
