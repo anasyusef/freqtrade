@@ -25,13 +25,18 @@ data "aws_iam_role" "ecs_task_execution_role" {
   name = "ecsTaskExecutionRole"
 }
 
+data "aws_ecr_image" "freqtrade_bot" {
+  repository_name = aws_ecr_repository.freqtrade_bot.name
+  image_tag       = "latest"
+}
+
 resource "aws_ecs_task_definition" "freqtrade_task" {
   family = "freqtrade_task"
   container_definitions = jsonencode(
     [
       {
         name      = "freqtrade_task"
-        image     = "${aws_ecr_repository.freqtrade_bot.repository_url}"
+        image     = "${aws_ecr_repository.freqtrade_bot.repository_url}:${data.aws_ecr_image.freqtrade_bot.image_tag}@${data.aws_ecr_image.freqtrade_bot.id}"
         essential = true
         memory    = 1024
         cpu       = 512
@@ -52,7 +57,7 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
         ]
         portMappings = [
           {
-            hostPort = 8080,
+            hostPort      = 8080,
             containerPort = 8080,
           }
         ]
@@ -85,7 +90,7 @@ resource "aws_ecs_service" "freqtrade_service" {
       "${aws_default_subnet.default_subnet_c.id}"
     ]
     assign_public_ip = true
-    security_groups = [ "${aws_security_group.service_sg.id}" ]
+    security_groups  = ["${aws_security_group.service_sg.id}"]
   }
 
   load_balancer {
