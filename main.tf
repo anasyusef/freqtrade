@@ -19,16 +19,20 @@ resource "aws_ecr_repository" "freqtrade_bot" {
 
 resource "aws_ecs_cluster" "freqtrade_cluster" {
   name = "freqtrade_cluster"
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 }
 
 data "aws_iam_role" "ecs_task_execution_role" {
   name = "ecsTaskExecutionRole"
 }
 
-data "aws_ecr_image" "freqtrade_bot" {
-  repository_name = aws_ecr_repository.freqtrade_bot.name
-  image_tag       = "latest"
-}
+# data "aws_ecr_image" "freqtrade_bot" {
+#   repository_name = aws_ecr_repository.freqtrade_bot.name
+# }
 
 resource "aws_ecs_task_definition" "freqtrade_task" {
   family = "freqtrade_task"
@@ -36,7 +40,8 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
     [
       {
         name      = "freqtrade_task"
-        image     = "${aws_ecr_repository.freqtrade_bot.repository_url}:${data.aws_ecr_image.freqtrade_bot.image_tag}@${data.aws_ecr_image.freqtrade_bot.id}"
+        # image     = "${aws_ecr_repository.freqtrade_bot.repository_url}:latest@${data.aws_ecr_image.freqtrade_bot.id}"
+        image     = "${aws_ecr_repository.freqtrade_bot.repository_url}:latest"
         essential = true
         memory    = 1024
         cpu       = 512
@@ -52,7 +57,7 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
           "trade",
           "--logfile", "/freqtrade/user_data/logs/freqtrade.log",
           "--config", "/freqtrade/user_data/base-config.json",
-          "--config", "/freqtrade/user_data/config-dev.json",
+          "--config", "/freqtrade/user_data/config-prod.json",
           "--strategy", "ProtectedZeus"
         ]
         portMappings = [
@@ -82,6 +87,8 @@ resource "aws_ecs_service" "freqtrade_service" {
   launch_type                       = "FARGATE"
   desired_count                     = 1
   health_check_grace_period_seconds = 120
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent = 100
 
   network_configuration {
     subnets = [
