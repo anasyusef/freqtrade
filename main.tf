@@ -151,8 +151,8 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
       }
   ])
   requires_compatibilities = ["EC2"]
-  memory                   = "400"
-  cpu                      = "400"
+  memory                   = "800"
+  cpu                      = "1024"
   execution_role_arn       = data.aws_iam_role.ecs_task_execution_role.arn
 
 }
