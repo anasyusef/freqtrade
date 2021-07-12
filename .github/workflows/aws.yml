@@ -48,7 +48,8 @@ jobs:
       with:
         task-definition: task-definition.json
         container-name: freqtrade_task
-        image: ${{ steps.build-image.outputs.image }}
+        image: 302142484185.dkr.ecr.ap-northeast-1.amazonaws.com/freqtrade_bot:latest
+        # image: ${{ steps.build-image.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -56,4 +57,4 @@ jobs:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: freqtrade_service
         cluster: freqtrade_cluster
-        wait-for-service-stability: true
+        wait-for-service-stability: false
