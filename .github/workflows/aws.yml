@@ -45,7 +45,7 @@ jobs:
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: freqtrade_task.json
+        task-definition: freqtrade_task
         container-name: freqtrade_task
         image: ${{ steps.build-image.outputs.image }}
 
