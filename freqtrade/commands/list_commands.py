@@ -14,11 +14,7 @@ from freqtrade.constants import USERPATH_HYPEROPTS, USERPATH_STRATEGIES
 from freqtrade.enums import RunMode
 from freqtrade.exceptions import OperationalException
 from freqtrade.exchange import market_is_active, validate_exchanges
-<<<<<<< HEAD
 from freqtrade.misc import parse_db_uri_for_logging, plural
-=======
-from freqtrade.misc import plural, parse_db_uri_for_logging
->>>>>>> feat: censor password
 from freqtrade.resolvers import ExchangeResolver, StrategyResolver
 
 
