@@ -100,6 +100,14 @@ target/
 .pytest_cache/
 .mypy_cache/
 
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+
 #exceptions
 !*.gitkeep
 
