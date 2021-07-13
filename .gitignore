@@ -3,6 +3,7 @@ config*.json
 *.sqlite
 logfile.txt
 user_data/*
+!user_data/base-config.json
 !user_data/strategy/sample_strategy.py
 !user_data/notebooks
 user_data/notebooks/*
@@ -73,6 +74,12 @@ instance/
 # Scrapy stuff:
 .scrapy
 
+#Terraform stuff
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+
 # Sphinx documentation
 docs/_build/
 
@@ -103,3 +110,4 @@ target/
 
 #exceptions
 !*.gitkeep
+

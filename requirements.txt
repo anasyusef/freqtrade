@@ -6,6 +6,7 @@ ccxt==1.52.83
 cryptography==3.4.7
 aiohttp==3.7.4.post0
 SQLAlchemy==1.4.20
+psycopg2-binary==2.9.1
 python-telegram-bot==13.7
 arrow==1.1.1
 cachetools==4.2.2
@@ -35,6 +36,7 @@ fastapi==0.66.0
 uvicorn==0.14.0
 pyjwt==2.1.0
 aiofiles==0.7.0
+ta~=0.7.0
 
 # Support for colorized terminal output
 colorama==0.4.4

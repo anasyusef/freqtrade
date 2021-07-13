@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator, List
 from typing.io import IO
+from urllib.parse import urlparse
 
 import rapidjson
 
@@ -15,6 +16,19 @@ from freqtrade.constants import DECIMAL_PER_COIN_FALLBACK, DECIMALS_PER_COIN
 
 
 logger = logging.getLogger(__name__)
+
+
+def parse_db_uri_for_logging(uri: str):
+    """
+    Helper method to parse the DB URI and return the same DB URI with the password censored
+    if it contains it. Otherwise, return the DB URI unchanged
+    :param uri: DB URI to parse for logging
+    """
+    parsed_db_uri = urlparse(uri)
+    if not parsed_db_uri.netloc:  # No need for censoring as no password was provided
+        return uri
+    pwd = parsed_db_uri.netloc.split(':')[1].split('@')[0]
+    return parsed_db_uri.geturl().replace(f':{pwd}@', ':****@')
 
 
 def decimals_per_coin(coin: str):

@@ -13,11 +13,10 @@ CONTRIBUTING.md
 MANIFEST.in
 README.md
 freqtrade.service
+user_data/data
 freqtrade.egg-info
 
-config.json*
 *.sqlite
-user_data
 *.log
 
 .vscode
