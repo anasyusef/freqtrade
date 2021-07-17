@@ -17,8 +17,18 @@ user_data/data
 user_data/backtest_results
 freqtrade.egg-info
 
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
 *.sqlite
 *.log
+
+# Env
+.env
 
 .vscode
 .mypy_cache
