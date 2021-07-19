@@ -33,3 +33,6 @@ freqtrade.egg-info
 .vscode
 .mypy_cache
 .ipynb_checkpoints
+
+# Grafana
+grafana

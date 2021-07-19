@@ -30,6 +30,22 @@ module "vpc" {
   }
 }
 
+resource "aws_security_group" "freqtrade_frontend_sg" {
+  vpc_id = module.vpc.vpc_id
+  ingress = [
+    {
+      cidr_blocks      = ["0.0.0.0/0"]
+      description      = "Allow traffic to freqtrade UI"
+      from_port        = 8080
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      protocol         = "TCP"
+      security_groups  = []
+      self             = true
+      to_port          = 8080
+    }
+  ]
+}
 resource "aws_security_group" "ec2_instances_sg" {
   vpc_id = module.vpc.vpc_id
   ingress = [
@@ -43,18 +59,6 @@ resource "aws_security_group" "ec2_instances_sg" {
       security_groups  = []
       self             = false
       to_port          = 22
-    },
-
-    {
-      cidr_blocks      = ["0.0.0.0/0"]
-      description      = "Allow traffic from ALB"
-      from_port        = 8080
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "TCP"
-      security_groups  = []
-      self             = false
-      to_port          = 8080
     },
     {
       cidr_blocks      = []
@@ -94,42 +98,32 @@ resource "aws_security_group" "monitoring_sg" {
     security_groups  = []
     self             = false
     to_port          = 3000
-  },
-  {
+    },
+    {
       cidr_blocks      = ["0.0.0.0/0"]
-      description      = "Allow SSH from anywhere (develop)"
-      from_port        = 22
+      description      = "Allow traffic to Prometheus (develop)"
+      from_port        = 9090
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       protocol         = "TCP"
       security_groups  = []
       self             = false
-      to_port          = 22
+      to_port          = 9090
     },
   ]
-  egress = [{
-    cidr_blocks      = ["0.0.0.0/0"]
-    description      = "Allow every outbound traffic"
-    from_port        = 0
-    ipv6_cidr_blocks = ["::/0"]
-    prefix_list_ids  = []
-    protocol         = -1
-    security_groups  = []
-    self             = false
-    to_port          = 0
-  }]
 }
 
 
 module "ec2_instances" {
+  for_each       = var.configs
   source         = "terraform-aws-modules/ec2-instance/aws"
-  name           = "freqtrade-ec2-cluster"
-  instance_count = 3
+  name           = "freqtrade-ec2-cluster-${each.key}"
+  instance_count = 1
 
   ami                    = "ami-0f4146903324aaa5b"
   instance_type          = "t2.micro"
   key_name               = "TokyoKey"
-  vpc_security_group_ids = [aws_security_group.ec2_instances_sg.id]
+  vpc_security_group_ids = [aws_security_group.ec2_instances_sg.id, aws_security_group.freqtrade_frontend_sg.id]
   iam_instance_profile   = "ecsInstanceRole"
   subnet_ids             = module.vpc.public_subnets
   user_data              = <<EOT
@@ -138,8 +132,8 @@ module "ec2_instances" {
   EOT
 
   tags = {
-    Terraform   = "true"
-    Environment = "prod"
+    Terraform = "true"
+    Strategy  = each.key
   }
   depends_on = [
     aws_ecs_cluster.freqtrade_cluster
@@ -154,7 +148,7 @@ module "nano_instances" {
   ami                    = "ami-0f4146903324aaa5b"
   instance_type          = "t2.nano"
   key_name               = "TokyoKey"
-  vpc_security_group_ids = [aws_security_group.monitoring_sg.id]
+  vpc_security_group_ids = [aws_security_group.ec2_instances_sg.id, aws_security_group.monitoring_sg.id]
   iam_instance_profile   = "ecsInstanceRole"
   subnet_ids             = module.vpc.public_subnets
   user_data              = <<EOT
@@ -164,7 +158,6 @@ module "nano_instances" {
 
   tags = {
     Terraform   = "true"
-    Environment = "prod"
   }
   depends_on = [
     aws_ecs_cluster.freqtrade_cluster
@@ -193,6 +186,10 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
   for_each     = var.configs
   family       = "freqtrade_task_${each.key}"
   network_mode = "bridge"
+  placement_constraints {
+    type       = "memberOf"
+    expression = "ec2InstanceId == ${module.ec2_instances[each.key].id[0]}"
+  }
   container_definitions = jsonencode(
     [
       {
@@ -260,7 +257,7 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
           {
             name  = "FTH_FREQTRADE__PASSWORD"
             value = var.ft_creds[each.key].ft_password
-          },
+          }
         ]
         dependsOn = [
           {
@@ -298,7 +295,7 @@ resource "aws_ecs_task_definition" "freqtrade_monitoring" {
   family       = "freqtrade_monitoring"
   network_mode = "bridge"
   placement_constraints {
-    type = "memberOf"
+    type       = "memberOf"
     expression = "attribute:ecs.instance-type == t2.nano"
   }
   container_definitions = jsonencode([
@@ -317,6 +314,12 @@ resource "aws_ecs_task_definition" "freqtrade_monitoring" {
           "awslogs-stream-prefix" = "ecs"
         }
       }
+      portMappings = [
+        {
+          hostPort      = 9090
+          containerPort = 9090
+        }
+      ]
       healthCheck = {
         interval = 60
         command = [

@@ -13,4 +13,4 @@ scrape_configs:
   - job_name: freqtrade3
     dns_sd_configs:
       - names:
-        - 'nfi7ho2.freqtrade'
+        - 'nfiv7hyperopt.freqtrade'

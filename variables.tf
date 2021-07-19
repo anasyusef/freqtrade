@@ -13,49 +13,19 @@ variable "grafana_password" {
 }
 
 variable "ft_creds" {
-  type = object({
-    ProtectedZeus = object({
-      ft_username = string
-      ft_password = string
-    })
-    Combined_NFIv7_SMA = object({
-      ft_username = string
-      ft_password = string
-    })
-    NFI7HO2 = object({
-      ft_username = string
-      ft_password = string
-    })
-  })
+  type      = map(any)
   sensitive = true
 }
 variable "configs" {
-  type = object({
-    ProtectedZeus = object({
-      config_path = string
-      cpu         = number
-      memory      = number
-    })
-    Combined_NFIv7_SMA = object({
-      config_path = string
-      cpu         = number
-      memory      = number
-    })
-    NFI7HO2 = object({
-      config_path = string
-      cpu         = number
-      memory      = number
-    })
-  })
-
+  type = map(any)
   default = {
     Combined_NFIv7_SMA = {
       config_path = "/freqtrade/user_data/config-dev-Combined_NFIv7_SMA.json"
       cpu         = 1024
       memory      = 800
     }
-    NFI7HO2 = {
-      config_path = "/freqtrade/user_data/config-dev-NFI7HO2.json"
+    NFIv7HyperOpt = {
+      config_path = "/freqtrade/user_data/config-prod-NFIv7HyperOpt.json"
       cpu         = 1024
       memory      = 800
     }

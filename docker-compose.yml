@@ -14,17 +14,18 @@ services:
       trade
       --logfile /freqtrade/user_data/logs/freqtrade.log
       --config /freqtrade/user_data/config.json
-      --config /freqtrade/user_data/config-dev-NFI7HO2.json
+      --config /freqtrade/user_data/config-dev-NFIv7HyperOpt.json
   ftmetric:
-    # TODO: recommend to specify version `ghcr.io/kamontat/ftmetric:vX.X.X`
-    image: ghcr.io/kamontat/ftmetric
+    image: ghcr.io/kamontat/ftmetric:v4.1.0-beta.9
     container_name: ftmetric
     restart: on-failure
     environment:
       - FTH_FREQTRADE__URL=http://freqtrade:8080
       # TODO: make it secure
       - FTH_FREQTRADE__USERNAME=dev-freqtrader
-      - FTH_FREQTRADE__PASSWORD=demo
+      - FTH_FREQTRADE__PASSWORD=demo12345
+    ports: 
+      - 8090:8090
     depends_on:
       - freqtrade
     healthcheck:
@@ -57,14 +58,14 @@ services:
       --config /freqtrade/user_data/config-dev-Combined_NFIv7_SMA.json
   ftmetric2:
     # TODO: recommend to specify version `ghcr.io/kamontat/ftmetric:vX.X.X`
-    image: ghcr.io/kamontat/ftmetric
+    image: ghcr.io/kamontat/ftmetric:v4.1.0-beta.9
     container_name: ftmetric2
     restart: on-failure
     environment:
       - FTH_FREQTRADE__URL=http://freqtrade2:8080
       # TODO: make it secure
       - FTH_FREQTRADE__USERNAME=dev-freqtrader
-      - FTH_FREQTRADE__PASSWORD=demo
+      - FTH_FREQTRADE__PASSWORD=_4yA%d5Bkka5&xGH
     depends_on:
       - freqtrade
     healthcheck:
@@ -86,8 +87,8 @@ services:
     restart:
       on-failure
       # be aware before open the port
-      # ports:
-      #   - 9090:9090
+    ports:
+      - 9090:9090
     volumes:
       # TODO: add configuration at prometheus/prometheus.yml
       - ./prometheus/config/local:/etc/prometheus/
