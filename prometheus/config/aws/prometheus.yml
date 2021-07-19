@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 1m
+  scrape_timeout: 5s
+scrape_configs:
+  - job_name: freqtrade1
+    dns_sd_configs:
+      - names:
+        - 'protectedzeus.freqtrade'
+  - job_name: freqtrade2
+    dns_sd_configs:
+      - names:
+        - 'combined_nfiv7_sma.freqtrade'
+  - job_name: freqtrade3
+    dns_sd_configs:
+      - names:
+        - 'nfi7ho2.freqtrade'
