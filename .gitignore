@@ -74,12 +74,6 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-#Terraform stuff
-*.tfstate
-*.tfstate.*
-.terraform/
-*.tfvars
-
 # Sphinx documentation
 docs/_build/
 
@@ -100,21 +94,6 @@ target/
 .pytest_cache/
 .mypy_cache/
 
-# Local .terraform directories
-**/.terraform/*
-
-# .tfstate files
-*.tfstate
-*.tfstate.*
-
-# Exclude all .tfvars files, which are likely to contain sentitive data, such as
-# password, private keys, and other secrets. These should not be part of version 
-# control as they are data points which are potentially sensitive and subject 
-# to change depending on the environment.
-#
-*.tfvars
-
-
 #exceptions
 !*.gitkeep
 
@@ -123,3 +102,9 @@ target/
 !config_examples/config_ftx.example.json
 !config_examples/config_full.example.json
 !config_examples/config_kraken.example.json
+
+# Local .terraform directories
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars

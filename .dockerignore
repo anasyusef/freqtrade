@@ -17,12 +17,12 @@ user_data/data
 user_data/backtest_results
 freqtrade.egg-info
 
-# Local .terraform directories
-**/.terraform/*
-
-# .tfstate files
+# Terraform stuff
 *.tfstate
 *.tfstate.*
+.terraform/
+*.tfvars
+
 
 *.sqlite
 *.log
