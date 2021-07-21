@@ -49,17 +49,17 @@ resource "aws_security_group" "freqtrade_frontend_sg" {
 resource "aws_security_group" "ec2_instances_sg" {
   vpc_id = module.vpc.vpc_id
   ingress = [
-    {
-      cidr_blocks      = ["0.0.0.0/0"]
-      description      = "Allow SSH from anywhere (develop)"
-      from_port        = 22
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "TCP"
-      security_groups  = []
-      self             = false
-      to_port          = 22
-    },
+    # {
+    #   cidr_blocks      = ["0.0.0.0/0"]
+    #   description      = "Allow SSH from anywhere (develop)"
+    #   from_port        = 22
+    #   ipv6_cidr_blocks = []
+    #   prefix_list_ids  = []
+    #   protocol         = "TCP"
+    #   security_groups  = []
+    #   self             = false
+    #   to_port          = 22
+    # },
     {
       cidr_blocks      = []
       description      = "Allow traffic from within SG"
@@ -99,17 +99,17 @@ resource "aws_security_group" "monitoring_sg" {
     self             = false
     to_port          = 3000
     },
-    {
-      cidr_blocks      = ["0.0.0.0/0"]
-      description      = "Allow traffic to Prometheus (develop)"
-      from_port        = 9090
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      protocol         = "TCP"
-      security_groups  = []
-      self             = false
-      to_port          = 9090
-    },
+    # {
+    #   cidr_blocks      = ["31.52.154.41/32"]
+    #   description      = "Allow traffic to Prometheus (develop)"
+    #   from_port        = 9090
+    #   ipv6_cidr_blocks = []
+    #   prefix_list_ids  = []
+    #   protocol         = "TCP"
+    #   security_groups  = []
+    #   self             = false
+    #   to_port          = 9090
+    # },
   ]
 }
 
@@ -157,7 +157,7 @@ module "nano_instances" {
   EOT
 
   tags = {
-    Terraform   = "true"
+    Terraform = "true"
   }
   depends_on = [
     aws_ecs_cluster.freqtrade_cluster
@@ -229,11 +229,11 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
       },
       {
         name      = "ftmetric_${each.key}"
-        image     = "ghcr.io/kamontat/ftmetric:v4.1.0-beta.9"
+        image     = "ghcr.io/kamontat/ftmetric:v4.2.0"
         essential = true
         portMappings = [
           {
-            protocol      = "tcp"
+            hostPort      = 8090
             containerPort = 8090
           }
         ]
@@ -449,15 +449,15 @@ resource "aws_ecs_service" "freqtrade_monitoring" {
   desired_count                      = 1
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 100
-  force_new_deployment               = true
+  # force_new_deployment               = true
 }
 resource "aws_ecs_service" "freqtrade_service" {
-  for_each                           = var.configs
-  name                               = "freqtrade_service_${each.key}"
-  cluster                            = aws_ecs_cluster.freqtrade_cluster.id
-  task_definition                    = aws_ecs_task_definition.freqtrade_task[each.key].arn
-  launch_type                        = "EC2"
-  force_new_deployment               = true
+  for_each        = var.configs
+  name            = "freqtrade_service_${each.key}"
+  cluster         = aws_ecs_cluster.freqtrade_cluster.id
+  task_definition = aws_ecs_task_definition.freqtrade_task[each.key].arn
+  launch_type     = "EC2"
+  # force_new_deployment               = true
   desired_count                      = 1
   deployment_minimum_healthy_percent = 0
   deployment_maximum_percent         = 100
