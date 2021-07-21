@@ -5,7 +5,7 @@ scrape_configs:
   - job_name: freqtrade1
     dns_sd_configs:
       - names:
-        - 'protectedzeus.freqtrade'
+        - 'nostalgiaforinfinitynext.freqtrade'
   - job_name: freqtrade2
     dns_sd_configs:
       - names:

@@ -29,7 +29,7 @@ variable "configs" {
       cpu         = 1024
       memory      = 800
     }
-    ProtectedZeus = {
+    NostalgiaForInfinityNext = {
       config_path = "/freqtrade/user_data/config-prod.json"
       cpu         = 1024
       memory      = 800
