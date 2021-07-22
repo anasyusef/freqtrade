@@ -21,18 +21,18 @@ variable "configs" {
   default = {
     Combined_NFIv7_SMA = {
       config_path = "/freqtrade/user_data/config-dev-Combined_NFIv7_SMA.json"
-      cpu         = 1024
-      memory      = 800
+      cpu         = 2048
+      memory      = 900
     }
     NFIv7HyperOpt = {
       config_path = "/freqtrade/user_data/config-prod-NFIv7HyperOpt.json"
-      cpu         = 1024
-      memory      = 800
+      cpu         = 2048
+      memory      = 900
     }
     NostalgiaForInfinityNext = {
       config_path = "/freqtrade/user_data/config-prod.json"
-      cpu         = 1024
-      memory      = 800
+      cpu         = 2048
+      memory      = 900
     }
   }
   description = "Strategies to run"

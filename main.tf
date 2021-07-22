@@ -49,17 +49,17 @@ resource "aws_security_group" "freqtrade_frontend_sg" {
 resource "aws_security_group" "ec2_instances_sg" {
   vpc_id = module.vpc.vpc_id
   ingress = [
-    # {
-    #   cidr_blocks      = ["0.0.0.0/0"]
-    #   description      = "Allow SSH from anywhere (develop)"
-    #   from_port        = 22
-    #   ipv6_cidr_blocks = []
-    #   prefix_list_ids  = []
-    #   protocol         = "TCP"
-    #   security_groups  = []
-    #   self             = false
-    #   to_port          = 22
-    # },
+    {
+      cidr_blocks      = ["0.0.0.0/0"]
+      description      = "Allow SSH from anywhere (develop)"
+      from_port        = 22
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      protocol         = "TCP"
+      security_groups  = []
+      self             = false
+      to_port          = 22
+    },
     {
       cidr_blocks      = []
       description      = "Allow traffic from within SG"
@@ -121,7 +121,8 @@ module "ec2_instances" {
   instance_count = 1
 
   ami                    = "ami-0f4146903324aaa5b"
-  instance_type          = "t2.micro"
+  instance_type          = "t3.micro"
+  cpu_credits            = "unlimited"
   key_name               = "TokyoKey"
   vpc_security_group_ids = [aws_security_group.ec2_instances_sg.id, aws_security_group.freqtrade_frontend_sg.id]
   iam_instance_profile   = "ecsInstanceRole"
@@ -452,11 +453,11 @@ resource "aws_ecs_service" "freqtrade_monitoring" {
   force_new_deployment               = false
 }
 resource "aws_ecs_service" "freqtrade_service" {
-  for_each        = var.configs
-  name            = "freqtrade_service_${each.key}"
-  cluster         = aws_ecs_cluster.freqtrade_cluster.id
-  task_definition = aws_ecs_task_definition.freqtrade_task[each.key].arn
-  launch_type     = "EC2"
+  for_each                           = var.configs
+  name                               = "freqtrade_service_${each.key}"
+  cluster                            = aws_ecs_cluster.freqtrade_cluster.id
+  task_definition                    = aws_ecs_task_definition.freqtrade_task[each.key].arn
+  launch_type                        = "EC2"
   force_new_deployment               = false
   desired_count                      = 1
   deployment_minimum_healthy_percent = 0
