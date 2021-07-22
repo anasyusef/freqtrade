@@ -13,8 +13,6 @@ CONTRIBUTING.md
 MANIFEST.in
 README.md
 freqtrade.service
-user_data/data
-user_data/backtest_results
 freqtrade.egg-info
 
 # Terraform stuff
@@ -27,6 +25,11 @@ freqtrade.egg-info
 *.sqlite
 *.log
 
+config.json*
+*.sqlite
+user_data
+*.log
+
 # Env
 .env
 
@@ -34,5 +37,6 @@ freqtrade.egg-info
 .mypy_cache
 .ipynb_checkpoints
 
-# Grafana
+# Monitoring
+prometheus
 grafana

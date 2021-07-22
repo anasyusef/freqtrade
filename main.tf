@@ -183,6 +183,40 @@ resource "aws_ecs_cluster" "freqtrade_cluster" {
 data "aws_iam_role" "ecs_task_execution_role" {
   name = "ecsTaskExecutionRole"
 }
+
+resource "aws_efs_file_system" "freqtrade_efs" {
+  creation_token         = "freqtrade_efs"
+  availability_zone_name = "${var.region}a"
+  lifecycle_policy {
+    transition_to_ia = "AFTER_30_DAYS"
+  }
+
+  tags = {
+    name = "freqtrade_efs"
+  }
+}
+
+resource "aws_security_group" "freqtrade_efs_sg" {
+  vpc_id = module.vpc.vpc_id 
+
+  ingress = [ {
+    cidr_blocks = [ "0.0.0.0/0" ]
+    description = "Allow EFS connections"
+    from_port = 2049
+    ipv6_cidr_blocks = [ ]
+    prefix_list_ids = [ ]
+    protocol = "TCP"
+    security_groups = [ "${aws_security_group.ec2_instances_sg.id}" ]
+    self = false
+    to_port = 2049
+  } ]
+}
+resource "aws_efs_mount_target" "freqtrade_mount_target" {
+  file_system_id = aws_efs_file_system.freqtrade_efs.id
+  subnet_id = module.vpc.public_subnets[0]
+  security_groups = [ "${aws_security_group.freqtrade_efs_sg.id}" ]
+}
+
 resource "aws_ecs_task_definition" "freqtrade_task" {
   for_each     = var.configs
   family       = "freqtrade_task_${each.key}"
@@ -211,6 +245,12 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
             "awslogs-stream-prefix" = "ecs"
           }
         }
+        mountPoints = [
+          {
+            sourceVolume  = "freqtrade-data"
+            containerPath = "/freqtrade/user_data"
+          }
+        ]
         command = [
           "trade",
           "--logfile", "/freqtrade/user_data/logs/freqtrade.log",
@@ -286,6 +326,16 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
       }
     ]
   )
+
+  volume {
+    name = "freqtrade-data"
+
+    efs_volume_configuration {
+      file_system_id = aws_efs_file_system.freqtrade_efs.id
+      root_directory = "/user_data"
+    }
+  }
+
   requires_compatibilities = ["EC2"]
   memory                   = each.value.memory
   cpu                      = each.value.cpu
