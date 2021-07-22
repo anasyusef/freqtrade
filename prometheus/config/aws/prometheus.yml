@@ -2,7 +2,7 @@ global:
   scrape_interval: 1m
   scrape_timeout: 5s
 scrape_configs:
-  - job_name: freqtrade1
+  - job_name: freqtrade_nfi_live
     dns_sd_configs:
       - names:
         - 'nostalgiaforinfinitynext.freqtrade'
