@@ -170,6 +170,11 @@ resource "aws_ecr_repository" "freqtrade_bot" {
   name = "freqtrade_bot"
 }
 
+data "aws_ecr_image" "freqtrade_image" {
+  repository_name = "freqtrade_bot"
+  image_tag       = "latest"
+}
+
 resource "aws_ecs_cluster" "freqtrade_cluster" {
   name = "freqtrade_cluster"
 
@@ -236,7 +241,7 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
     [
       {
         name      = "freqtrade_task_${each.key}"
-        image     = "${aws_ecr_repository.freqtrade_bot.repository_url}:latest"
+        image     = "${aws_ecr_repository.freqtrade_bot.repository_url}:latest@${data.aws_ecr_image.freqtrade_image.image_digest}"
         essential = true
         portMappings = [
           {
