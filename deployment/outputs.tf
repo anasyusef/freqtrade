@@ -1,11 +1,11 @@
 output "strategies_instance_ips" {
-  description = "IPs of instances that are running the strategies"
+  description = "freqtradeUI of strategies"
   value = tomap({
-    for key, value in module.ec2_instances : key => value.public_ip
+    for key, value in module.ec2_instances : key => "http://${value.public_ip[0]}:${var.configs[key].ft_port}"
   })
 }
 
-output "freqtrade_monitoring_instance_ips" {
-  description = "IPs of instances that handle monitoring"
-  value       = module.nano_instances.*.public_ip
+output "grafana_url" {
+  description = "Grafana URL"
+  value       = "http://${module.nano_instances.public_ip[0]}:3000"
 }

@@ -32,17 +32,17 @@ module "vpc" {
 
 resource "aws_security_group" "freqtrade_frontend_sg" {
   vpc_id = module.vpc.vpc_id
-  ingress = [
+  ingress = [for uniq_port in distinct([for k, config_value in var.configs : config_value.ft_port]) :
     {
       cidr_blocks      = ["0.0.0.0/0"]
       description      = "Allow traffic to freqtrade UI"
-      from_port        = 8080
+      from_port        = uniq_port
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       protocol         = "TCP"
       security_groups  = []
-      self             = true
-      to_port          = 8080
+      self             = false
+      to_port          = uniq_port
     }
   ]
 }
@@ -118,10 +118,10 @@ module "ec2_instances" {
   for_each       = var.configs
   source         = "terraform-aws-modules/ec2-instance/aws"
   name           = "freqtrade-ec2-cluster-${each.key}"
-  instance_count = 1
+  instance_count = each.value.create_instance ? 1 : 0
 
   ami                    = "ami-0f4146903324aaa5b"
-  instance_type          = "t3.micro"
+  instance_type          = try(each.value.instance_type, "t3.micro")
   cpu_credits            = "unlimited"
   key_name               = "TokyoKey"
   vpc_security_group_ids = [aws_security_group.ec2_instances_sg.id, aws_security_group.freqtrade_frontend_sg.id]
@@ -197,34 +197,41 @@ resource "aws_efs_file_system" "freqtrade_efs" {
 }
 
 resource "aws_security_group" "freqtrade_efs_sg" {
-  vpc_id = module.vpc.vpc_id 
+  vpc_id = module.vpc.vpc_id
 
-  ingress = [ {
-    cidr_blocks = [ "0.0.0.0/0" ]
-    description = "Allow EFS connections"
-    from_port = 2049
-    ipv6_cidr_blocks = [ ]
-    prefix_list_ids = [ ]
-    protocol = "TCP"
-    security_groups = [ "${aws_security_group.ec2_instances_sg.id}" ]
-    self = false
-    to_port = 2049
-  } ]
+  ingress = [{
+    cidr_blocks      = ["0.0.0.0/0"]
+    description      = "Allow EFS connections"
+    from_port        = 2049
+    ipv6_cidr_blocks = []
+    prefix_list_ids  = []
+    protocol         = "TCP"
+    security_groups  = ["${aws_security_group.ec2_instances_sg.id}"]
+    self             = false
+    to_port          = 2049
+  }]
 }
 resource "aws_efs_mount_target" "freqtrade_mount_target" {
-  file_system_id = aws_efs_file_system.freqtrade_efs.id
-  subnet_id = module.vpc.public_subnets[0]
-  security_groups = [ "${aws_security_group.freqtrade_efs_sg.id}" ]
+  file_system_id  = aws_efs_file_system.freqtrade_efs.id
+  subnet_id       = module.vpc.public_subnets[0]
+  security_groups = ["${aws_security_group.freqtrade_efs_sg.id}"]
 }
 
 resource "aws_ecs_task_definition" "freqtrade_task" {
   for_each     = var.configs
   family       = "freqtrade_task_${each.key}"
   network_mode = "bridge"
-  placement_constraints {
-    type       = "memberOf"
-    expression = "ec2InstanceId == ${module.ec2_instances[each.key].id[0]}"
+
+  dynamic "placement_constraints" {
+    // Add placement constraint if we chose to create an instance for it.
+    for_each = each.value.create_instance ? [true] : []
+    content {
+      type       = "memberOf"
+      expression = "ec2InstanceId == ${module.ec2_instances[each.key].id[0]}"
+    }
+
   }
+
   container_definitions = jsonencode(
     [
       {
@@ -233,8 +240,8 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
         essential = true
         portMappings = [
           {
-            hostPort      = 8080
-            containerPort = 8080
+            hostPort      = each.value.ft_port
+            containerPort = each.value.ft_port
           }
         ]
         logConfiguration = {
@@ -261,7 +268,7 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
           interval = 60
           command = [
             "CMD-SHELL",
-            "curl -f localhost:8080/api/v1/ping || exit 1"
+            "curl -f localhost:${each.value.ft_port}/api/v1/ping || exit 1"
           ],
           timeout     = 15
           startPeriod = 120
@@ -270,12 +277,12 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
       },
       {
         name      = "ftmetric_${each.key}"
-        image     = "ghcr.io/kamontat/ftmetric:v4.2.0"
+        image     = "ghcr.io/kamontat/ftmetric:v4.3.0"
         essential = true
         portMappings = [
           {
-            hostPort      = 8090
-            containerPort = 8090
+            hostPort      = each.value.ft_metric_port
+            containerPort = each.value.ft_metric_port
           }
         ]
         logConfiguration = {
@@ -289,7 +296,7 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
         environment = [
           {
             name  = "FTH_FREQTRADE__URL"
-            value = "http://freqtrade_task_${each.key}:8080"
+            value = "http://freqtrade_task_${each.key}:${each.value.ft_port}"
           },
           {
             name  = "FTH_FREQTRADE__USERNAME"
@@ -314,7 +321,7 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
             "--no-verbose",
             "--tries=1",
             "--spider",
-            "http://localhost:8090/version",
+            "http://localhost:${each.value.ft_metric_port}/version",
           ],
           timeout     = 15
           startPeriod = 15
@@ -521,7 +528,7 @@ resource "aws_ecs_service" "freqtrade_service" {
   service_registries {
     registry_arn   = aws_service_discovery_service.freqtrade_sd[each.key].arn
     container_name = "ftmetric_${each.key}"
-    container_port = 8090
+    container_port = each.value.ft_metric_port
   }
 }
 
