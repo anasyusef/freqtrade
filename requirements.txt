@@ -35,16 +35,9 @@ fastapi==0.67.0
 uvicorn==0.14.0
 pyjwt==2.1.0
 aiofiles==0.7.0
-ta~=0.7.0
 
 # Support for colorized terminal output
 colorama==0.4.4
 # Building config files interactively
 questionary==1.10.0
 prompt-toolkit==3.0.19
-
-# PostgreSQL driver
-psycopg2-binary==2.9.1
-
-# Support for NFIv7Next strategy
-pandas-ta==0.3.2b0

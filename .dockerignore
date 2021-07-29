@@ -15,28 +15,11 @@ README.md
 freqtrade.service
 freqtrade.egg-info
 
-# Terraform stuff
-*.tfstate
-*.tfstate.*
-.terraform/
-*.tfvars
-
-
-*.sqlite
-*.log
-
 config.json*
 *.sqlite
 user_data
 *.log
 
-# Env
-.env
-
 .vscode
 .mypy_cache
 .ipynb_checkpoints
-
-# Monitoring
-prometheus
-grafana

@@ -4,7 +4,7 @@ FROM freqtradeorg/freqtrade:develop
 # Don't forget to switch the user back below!
 # USER root
 
-# The below dependency - pyti - serves as an example. Please use whatever you need!
-RUN pip install --user pyti
+# Install postgresql driver and pandas-ta for strategy
+RUN pip install --user psycopg2-binary pandas-ta
 
 # USER ftuser

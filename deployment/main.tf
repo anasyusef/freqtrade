@@ -173,6 +173,9 @@ resource "aws_ecr_repository" "freqtrade_bot" {
 data "aws_ecr_image" "freqtrade_image" {
   repository_name = "freqtrade_bot"
   image_tag       = "latest"
+  depends_on = [
+    aws_ecr_repository.freqtrade_bot
+  ]
 }
 
 resource "aws_ecs_cluster" "freqtrade_cluster" {
