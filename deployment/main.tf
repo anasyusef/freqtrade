@@ -17,9 +17,7 @@ module "vpc" {
   cidr   = "10.0.0.0/16"
 
   azs = [
-    "ap-northeast-1a",
-    "ap-northeast-1c",
-    "ap-northeast-1d"
+    "ap-northeast-1a"
   ]
   public_subnets       = ["10.0.0.0/20", "10.0.16.0/20", "10.0.32.0/20"]
   enable_dns_hostnames = true
@@ -113,52 +111,62 @@ resource "aws_security_group" "monitoring_sg" {
   ]
 }
 
+resource "aws_instance" "freqtrade_strategies" {
+  for_each = var.configs
 
-module "ec2_instances" {
-  for_each       = var.configs
-  source         = "terraform-aws-modules/ec2-instance/aws"
-  name           = "freqtrade-ec2-cluster-${each.key}"
-  instance_count = each.value.create_instance ? 1 : 0
-
-  ami                    = "ami-0f4146903324aaa5b"
+  ami                    = "ami-08b0d0fd5e2b479a8" # Custom AMI - ECS Optimised Disk
   instance_type          = try(each.value.instance_type, "t3.micro")
-  cpu_credits            = "unlimited"
   key_name               = "TokyoKey"
   vpc_security_group_ids = [aws_security_group.ec2_instances_sg.id, aws_security_group.freqtrade_frontend_sg.id]
   iam_instance_profile   = "ecsInstanceRole"
-  subnet_ids             = module.vpc.public_subnets
+  subnet_id              = module.vpc.public_subnets[0]
   user_data              = <<EOT
   #!/bin/bash
-  echo ECS_CLUSTER="${aws_ecs_cluster.freqtrade_cluster.name}" >> /etc/ecs/ecs.config
+  echo ECS_CLUSTER="${aws_ecs_cluster.freqtrade_cluster.name}" >> /etc/ecs/ecs.config # Register instance to ECS cluster
+  dd if=/dev/zero of=/swapfile bs=128M count=8 # Allocate swap space
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
   EOT
 
   tags = {
+    Name      = "freqtrade-cluster-${each.key}"
     Terraform = "true"
     Strategy  = each.key
   }
   depends_on = [
     aws_ecs_cluster.freqtrade_cluster
   ]
+
+  root_block_device {
+    volume_size = 8
+  }
+  credit_specification {
+    cpu_credits = "unlimited"
+  }
 }
 
-module "nano_instances" {
-  source         = "terraform-aws-modules/ec2-instance/aws"
-  name           = "freqtrade-ec2-cluster"
-  instance_count = 1
+resource "aws_instance" "freqtrade_monitoring" {
 
-  ami                    = "ami-0f4146903324aaa5b"
+  ami                    = "ami-08b0d0fd5e2b479a8"
   instance_type          = "t2.nano"
   key_name               = "TokyoKey"
   vpc_security_group_ids = [aws_security_group.ec2_instances_sg.id, aws_security_group.monitoring_sg.id]
   iam_instance_profile   = "ecsInstanceRole"
-  subnet_ids             = module.vpc.public_subnets
+  subnet_id              = module.vpc.public_subnets[0]
   user_data              = <<EOT
   #!/bin/bash
   echo ECS_CLUSTER="${aws_ecs_cluster.freqtrade_cluster.name}" >> /etc/ecs/ecs.config
   EOT
 
+  root_block_device {
+    volume_size = 8
+  }
   tags = {
-    Terraform = "true"
+    Name       = "freqtrade-monitoring"
+    Terraform  = "true"
+    Monitoring = "true"
   }
   depends_on = [
     aws_ecs_cluster.freqtrade_cluster
@@ -182,10 +190,10 @@ resource "aws_ecs_cluster" "freqtrade_cluster" {
   name = "freqtrade_cluster"
 
 
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
-  }
+  # setting {
+  #   name  = "containerInsights"
+  #   value = "enabled"
+  # }
 }
 
 data "aws_iam_role" "ecs_task_execution_role" {
@@ -235,7 +243,7 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
     for_each = each.value.create_instance ? [true] : []
     content {
       type       = "memberOf"
-      expression = "ec2InstanceId == ${module.ec2_instances[each.key].id[0]}"
+      expression = "ec2InstanceId == ${aws_instance.freqtrade_strategies[each.key].id}"
     }
 
   }
@@ -272,6 +280,10 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
           "--config", "/freqtrade/user_data/config.json",
           "--config", each.value.config_path,
         ]
+        linuxParameters = {
+          maxSwap = 1024
+          swappiness = 10
+        }
         healthCheck = {
           interval = 60
           command = [
