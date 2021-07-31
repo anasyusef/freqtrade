@@ -18,12 +18,12 @@ scrape_configs:
     dns_sd_configs:
       - names:
         - 'nostalgiaforinfinityv5multioffsetandho.freqtrade'
-  - job_name: freqtrade_bigz04_alt_dev
-    dns_sd_configs:
-      - names:
-        - 'bigz04_tsl2.freqtrade'
-  - job_name: freqtrade_bigz04_alt2_dev
-    dns_sd_configs:
-      - names:
-        - 'bigz04_tsl3.freqtrade'
+  # - job_name: freqtrade_bigz04_alt_dev
+  #   dns_sd_configs:
+  #     - names:
+  #       - 'bigz04_tsl2.freqtrade'
+  # - job_name: freqtrade_bigz04_alt2_dev
+  #   dns_sd_configs:
+  #     - names:
+  #       - 'bigz04_tsl3.freqtrade'
     
