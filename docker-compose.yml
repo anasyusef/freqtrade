@@ -14,7 +14,7 @@ services:
       trade
       --logfile /freqtrade/user_data/logs/freqtrade.log
       --config /freqtrade/user_data/config.json
-      --config /freqtrade/user_data/config-dev-Combined_NFIv7_SMA.json
+      --config /freqtrade/user_data/config-dev.json
   # ftmetric:
   #   image: ghcr.io/kamontat/ftmetric:v4.1.0-beta.9
   #   container_name: ftmetric
