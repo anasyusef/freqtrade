@@ -297,7 +297,7 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
       },
       {
         name      = "ftmetric_${each.key}"
-        image     = "ghcr.io/kamontat/ftmetric:v4.3.0"
+        image     = "ghcr.io/kamontat/ftmetric:v4.5.3"
         essential = true
         portMappings = [
           {
