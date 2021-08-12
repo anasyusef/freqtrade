@@ -28,14 +28,14 @@ variable "configs" {
       create_instance = true
     }
 
-    NostalgiaForInfinityV5MultiOffsetAndHO = {
-      config_path     = "/freqtrade/user_data/config-dev-NostalgiaForInfinityV5MultiOffsetAndHO.json"
-      cpu             = 2048
-      memory          = 900
-      ft_port         = 8080
-      ft_metric_port  = 8090
-      create_instance = true
-    }
+    # NostalgiaForInfinityV5MultiOffsetAndHO = {
+    #   config_path     = "/freqtrade/user_data/config-dev-NostalgiaForInfinityV5MultiOffsetAndHO.json"
+    #   cpu             = 2048
+    #   memory          = 900
+    #   ft_port         = 8080
+    #   ft_metric_port  = 8090
+    #   create_instance = true
+    # }
 
     # BigZ04_TSL2 = {
     #   config_path     = "/freqtrade/user_data/config-dev-BigZ04_TSL2.json"

@@ -290,8 +290,8 @@ resource "aws_ecs_task_definition" "freqtrade_task" {
             "CMD-SHELL",
             "curl -f localhost:${each.value.ft_port}/api/v1/ping || exit 1"
           ],
-          timeout     = 15
-          startPeriod = 120
+          timeout     = 45
+          startPeriod = 180
           retries     = 3
         }
       },

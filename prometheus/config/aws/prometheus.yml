@@ -14,10 +14,10 @@ scrape_configs:
     dns_sd_configs:
       - names:
         - 'nfiv7hyperopt.freqtrade'
-  - job_name: freqtrade_nfiv5_alt_dev
-    dns_sd_configs:
-      - names:
-        - 'nostalgiaforinfinityv5multioffsetandho.freqtrade'
+  # - job_name: freqtrade_nfiv5_alt_dev
+  #   dns_sd_configs:
+  #     - names:
+  #       - 'nostalgiaforinfinityv5multioffsetandho.freqtrade'
   # - job_name: freqtrade_bigz04_alt_dev
   #   dns_sd_configs:
   #     - names:
