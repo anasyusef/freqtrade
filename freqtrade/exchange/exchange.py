@@ -19,7 +19,8 @@ from ccxt.base.decimal_to_precision import (ROUND_DOWN, ROUND_UP, TICK_SIZE, TRU
                                             decimal_to_precision)
 from pandas import DataFrame
 
-from freqtrade.constants import DEFAULT_AMOUNT_RESERVE_PERCENT, ListPairsWithTimeframes
+from freqtrade.constants import (DEFAULT_AMOUNT_RESERVE_PERCENT, NON_OPEN_EXCHANGE_STATES,
+                                 ListPairsWithTimeframes)
 from freqtrade.data.converter import ohlcv_to_dataframe, trades_dict_to_list
 from freqtrade.exceptions import (DDosProtection, ExchangeError, InsufficientFundsError,
                                   InvalidOrderException, OperationalException, PricingError,
@@ -53,12 +54,16 @@ class Exchange:
     # Parameters to add directly to buy/sell calls (like agreeing to trading agreement)
     _params: Dict = {}
 
+    # Additional headers - added to the ccxt object
+    _headers: Dict = {}
+
     # Dict to specify which options each exchange implements
     # This defines defaults, which can be selectively overridden by subclasses using _ft_has
     # or by specifying them in the configuration.
     _ft_has_default: Dict = {
         "stoploss_on_exchange": False,
         "order_time_in_force": ["gtc"],
+        "time_in_force_parameter": "timeInForce",
         "ohlcv_params": {},
         "ohlcv_candle_limit": 500,
         "ohlcv_partial_candle": True,
@@ -168,7 +173,7 @@ class Exchange:
             asyncio.get_event_loop().run_until_complete(self._api_async.close())
 
     def _init_ccxt(self, exchange_config: Dict[str, Any], ccxt_module: CcxtModuleType = ccxt,
-                   ccxt_kwargs: dict = None) -> ccxt.Exchange:
+                   ccxt_kwargs: Dict = {}) -> ccxt.Exchange:
         """
         Initialize ccxt with given config and return valid
         ccxt instance.
@@ -187,6 +192,10 @@ class Exchange:
         }
         if ccxt_kwargs:
             logger.info('Applying additional ccxt config: %s', ccxt_kwargs)
+        if self._headers:
+            # Inject static headers after the above output to not confuse users.
+            ccxt_kwargs = deep_merge_dicts({'headers': self._headers}, ccxt_kwargs)
+        if ccxt_kwargs:
             ex_config.update(ccxt_kwargs)
         try:
 
@@ -351,9 +360,16 @@ class Exchange:
     def validate_stakecurrency(self, stake_currency: str) -> None:
         """
         Checks stake-currency against available currencies on the exchange.
+        Only runs on startup. If markets have not been loaded, there's been a problem with
+        the connection to the exchange.
         :param stake_currency: Stake-currency to validate
         :raise: OperationalException if stake-currency is not available.
         """
+        if not self._markets:
+            raise OperationalException(
+                'Could not load markets, therefore cannot start. '
+                'Please investigate the above error for more details.'
+                )
         quote_currencies = self.get_quote_currencies()
         if stake_currency not in quote_currencies:
             raise OperationalException(
@@ -708,7 +724,8 @@ class Exchange:
 
         params = self._params.copy()
         if time_in_force != 'gtc' and ordertype != 'market':
-            params.update({'timeInForce': time_in_force})
+            param = self._ft_has.get('time_in_force_parameter', '')
+            params.update({param: time_in_force})
 
         try:
             # Set the precision for amount and price(rate) as accepted by the exchange
@@ -804,7 +821,7 @@ class Exchange:
         :param order: Order dict as returned from fetch_order()
         :return: True if order has been cancelled without being filled, False otherwise.
         """
-        return (order.get('status') in ('closed', 'canceled', 'cancelled')
+        return (order.get('status') in NON_OPEN_EXCHANGE_STATES
                 and order.get('filled') == 0.0)
 
     @retrier
@@ -1038,7 +1055,7 @@ class Exchange:
             logger.debug(f"Using Last {conf_strategy['price_side'].capitalize()} / Last Price")
             ticker = self.fetch_ticker(pair)
             ticker_rate = ticker[conf_strategy['price_side']]
-            if ticker['last']:
+            if ticker['last'] and ticker_rate:
                 if side == 'buy' and ticker_rate > ticker['last']:
                     balance = conf_strategy['ask_last_balance']
                     ticker_rate = ticker_rate + balance * (ticker['last'] - ticker_rate)
@@ -1253,7 +1270,7 @@ class Exchange:
         logger.debug("Refreshing candle (OHLCV) data for %d pairs", len(pair_list))
 
         input_coroutines = []
-
+        cached_pairs = []
         # Gather coroutines to run
         for pair, timeframe in set(pair_list):
             if (((pair, timeframe) not in self._klines)
@@ -1265,6 +1282,7 @@ class Exchange:
                     "Using cached candle (OHLCV) data for pair %s, timeframe %s ...",
                     pair, timeframe
                 )
+                cached_pairs.append((pair, timeframe))
 
         results = asyncio.get_event_loop().run_until_complete(
             asyncio.gather(*input_coroutines, return_exceptions=True))
@@ -1287,6 +1305,10 @@ class Exchange:
             results_df[(pair, timeframe)] = ohlcv_df
             if cache:
                 self._klines[(pair, timeframe)] = ohlcv_df
+        # Return cached klines
+        for pair, timeframe in cached_pairs:
+            results_df[(pair, timeframe)] = self.klines((pair, timeframe), copy=False)
+
         return results_df
 
     def _now_is_time_to_refresh(self, pair: str, timeframe: str) -> bool:
@@ -1497,7 +1519,7 @@ class Exchange:
         :returns List of trade data
         """
         if not self.exchange_has("fetchTrades"):
-            raise OperationalException("This exchange does not suport downloading Trades.")
+            raise OperationalException("This exchange does not support downloading Trades.")
 
         return asyncio.get_event_loop().run_until_complete(
             self._async_get_trade_history(pair=pair, since=since,

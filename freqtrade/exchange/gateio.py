@@ -1,4 +1,4 @@
-""" Kucoin exchange subclass """
+""" Gate.io exchange subclass """
 import logging
 from typing import Dict
 
@@ -8,9 +8,9 @@ from freqtrade.exchange import Exchange
 logger = logging.getLogger(__name__)
 
 
-class Kucoin(Exchange):
+class Gateio(Exchange):
     """
-    Kucoin exchange class. Contains adjustments needed for Freqtrade to work
+    Gate.io exchange class. Contains adjustments needed for Freqtrade to work
     with this exchange.
 
     Please note that this exchange is not included in the list of exchanges
@@ -19,8 +19,5 @@ class Kucoin(Exchange):
     """
 
     _ft_has: Dict = {
-        "l2_limit_range": [20, 100],
-        "l2_limit_range_required": False,
-        "order_time_in_force": ['gtc', 'fok', 'ioc'],
-        "time_in_force_parameter": "timeInForce",
+        "ohlcv_candle_limit": 1000,
     }
