@@ -4,7 +4,6 @@ FROM freqtradeorg/freqtrade:stable
 # Don't forget to switch the user back below!
 # USER root
 
-# Install postgresql driver and pandas-ta for the strategy
-RUN pip install --user psycopg2-binary pandas-ta ta
+RUN pip install --user psycopg2-binary ta
 
 # USER ftuser
